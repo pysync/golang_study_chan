@@ -14,8 +14,8 @@ type Fetcher interface {
 // Crawl uses fetcher to recursively crawl
 // pages starting with url, to a maximum of depth.
 func Crawl(url string, depth int, fetcher Fetcher) {
-	// define max worker count and chan buffer length
-	const workers, length = 2, 100
+	// define max worker count
+	const workers = 2
 
 	// make slice of strings store request urls
 	jobs := []string{url}
@@ -29,8 +29,8 @@ func Crawl(url string, depth int, fetcher Fetcher) {
 	// create chan using for notify terminate signal
 	exit := make(chan bool)
 
-	// create buffer chan for incoming requests
-	req := make(chan string, length)
+	// create chan for incoming requests
+	req := make(chan string)
 
 	// create handle function to handle each request
 	handle := func(queue chan string, id int) {
@@ -45,14 +45,17 @@ func Crawl(url string, depth int, fetcher Fetcher) {
 
 			working[r] = 1
 			body, urls, err := fetcher.Fetch(r)
+			time.Sleep(time.Second)
 			if err != nil {
 				fmt.Printf("worker[%d]not found: %s\n", id, url)
-				return
+
+			} else {
+				fmt.Printf("worker[%d]found: %s %q\n", id, url, body)
+				for _, u := range urls {
+					jobs = append(jobs, u)
+				}
 			}
-			fmt.Printf("worker[%d]found: %s %q\n", id, url, body)
-			for _, u := range urls {
-				jobs = append(jobs, u)
-			}
+
 			delete(working, r)
 			done[r] = 1
 		}
@@ -86,7 +89,13 @@ func main() {
 	Crawl("http://golang.org/", 4, fetcher)
 }
 
-// fakeFetcher is Fetcher that returns canned results.
+// fakeFetcher
+// is
+// Fetcher
+// that
+// returns
+// canned
+// results.
 type fakeFetcher map[string]*fakeResult
 
 type fakeResult struct {
@@ -101,7 +110,11 @@ func (f fakeFetcher) Fetch(url string) (string, []string, error) {
 	return "", nil, fmt.Errorf("not found: %s", url)
 }
 
-// fetcher is a populated fakeFetcher.
+// fetcher
+// is
+// a
+// populated
+// fakeFetcher.
 var fetcher = fakeFetcher{
 	"http://golang.org/": &fakeResult{
 		"The Go Programming Language",
